@@ -1,7 +1,7 @@
 package com.bilal
 
 import java.net.InetSocketAddress
-
+import pprint._
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.event.LoggingReceive
 import akka.io.IO
@@ -11,7 +11,6 @@ import com.bilal.DnsActor.{AddTxtRecord, GetAllTxtRecords}
 import com.github.mkroli.dns4s.Message
 import com.github.mkroli.dns4s.akka._
 import com.github.mkroli.dns4s.dsl._
-import com.github.mkroli.dns4s.section.{HeaderSection, QuestionSection, ResourceRecord}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationLong
@@ -43,30 +42,37 @@ class DnsActor extends Actor {
 
   override def receive: PartialFunction[Any, Unit] =  LoggingReceive {
     case AddTxtRecord(value) =>
-      println(s"adding new txt address: $value\n")
+      pprintln(s"adding new txt address: $value\n")
       txtAddresses = txtAddresses :+ value
-      println(s"new txtAddress list: $txtAddresses\n")
+      pprintln(s"new txtAddress list: $txtAddresses\n")
 
     case GetAllTxtRecords =>
-      println("getting all txt records\n")
+      pprintln("getting all txt records\n")
       sender() ! txtAddresses
 
     case Query(q) ~ Questions(QName(host) ~ TypeTXT() :: Nil) =>
-      println(s"TXT_RECORD query received for host: $host\n$q\n")
+      println(s"TXT_RECORD query received for host: $host")
+      pprintln(q)
+      println()
       val res = txtAddresses.map(RRName(acme) ~ TXTRecord(_))
       sender ! Response(q) ~ Answers(res :_*) ~ AuthoritativeAnswer
 
     case Query(q) ~ Questions(QName(host) ~ TypeA() :: Nil) if names.contains(host.toLowerCase) =>
-      println(s"A_RECORD query received for $host\n$q\n")
+      println(s"A_RECORD query received for $host")
+      pprintln(q)
+      println()
       sender ! Response(q) ~ Answers(RRName(host) ~ ARecord(names(host))) ~ AuthoritativeAnswer
 
     case message: Message =>
-      println(s"UNKNOWN query received & refused \n$message\n")
+      println(s"UNKNOWN query received & refused")
+      pprintln(message)
+      println()
       sender ! Response(message) ~ Refused
-      //forwardMessage(message).pipeTo(sender)
 
     case x =>
-      println(s"UNKNOWN akka message received \n$x\n")
+      println(s"UNKNOWN akka message received")
+      pprintln(x)
+      println()
   }
 }
 
