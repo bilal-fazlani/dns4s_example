@@ -55,7 +55,7 @@ class DnsActor extends Actor {
       pprintln(q)
       println()
       val res = txtAddresses.map(RRName(acme) ~ TXTRecord(_))
-      val response = Response(q) ~ Answers(res: _*) ~ AuthoritativeAnswer
+      val response = (Response(q) ~ Answers(res: _*) ~ AuthoritativeAnswer).copy(additional = Seq.empty)
       sender ! response
       println("response sent")
       pprintln(response)

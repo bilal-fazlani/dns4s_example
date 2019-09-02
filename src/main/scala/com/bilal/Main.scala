@@ -16,7 +16,10 @@ object Main extends App {
     println(s"DNS HTTP service: $httpBindResult")
     val startResult = Await.result(DnsActor.bind(ref), 5.seconds)
     println(s"DNS service: $startResult")
-    StdIn.readLine("press any button to exit...\n")
+    println("press any button to exit...\n")
+    while(StdIn.readLine() != "\n"){
+
+    }
   }
   catch {
     case NonFatal(exception) =>
