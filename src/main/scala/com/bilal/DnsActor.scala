@@ -53,8 +53,31 @@ class DnsActor extends Actor {
     case Query(q) ~ Questions(QName(host) ~ TypeTXT() :: Nil)
       if host.toLowerCase == acme.toLowerCase || host.toLowerCase == root =>
       println(s"txt query $q \nreceived for host: $host")
-      sender ! Response(q) ~ Answers(RRName(host) ~ TXTRecord(txtAddresses:_*))
+      val res = txtAddresses.map(RRName(host) ~ TXTRecord(_))
+      sender ! Response(q) ~ Answers(res :_*)
 
+//      //generic
+//      Message(
+//        HeaderSection(61770,false,0,false,false,false,false,0,1,0,0,1),
+//        Vector(
+//          QuestionSection(aPPS.BilAL-FazlANi.COM,257,1)
+//        ),
+//        Vector(),
+//        Vector(),
+//        Vector(ResourceRecord(,41,512,32768,OPTResource(List())))
+//      )
+//
+//      // txt
+//      Message(
+//        HeaderSection(4067,false,0,false,false,false,false,0,1,0,0,1),
+//        Vector(
+//          QuestionSection(_ACmE-challenge.appS.bilAl-fazlaNI.COm,16,1)
+//        ),
+//        Vector(),
+//        Vector(),
+//        Vector(ResourceRecord(,41,512,32768,OPTResource(List())))
+//      )
+//
     case Query(q) ~ Questions(QName(host) ~ TypeA() :: Nil) if names.contains(host) =>
       println(s"query received for $host")
       sender ! Response(q) ~ Answers(RRName(host) ~ ARecord(names(host)))
