@@ -11,7 +11,7 @@ import com.bilal.DnsActor.{AddTxtRecord, GetAllTxtRecords}
 import com.github.mkroli.dns4s.Message
 import com.github.mkroli.dns4s.akka._
 import com.github.mkroli.dns4s.dsl._
-import com.github.mkroli.dns4s.section.{HeaderSection, QuestionSection}
+import com.github.mkroli.dns4s.section.{HeaderSection, QuestionSection, ResourceRecord}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationLong
@@ -53,7 +53,7 @@ class DnsActor extends Actor {
     case Query(q) ~ Questions(QName(host) ~ TypeTXT() :: Nil)
       if host.toLowerCase == acme.toLowerCase || host.toLowerCase == root =>
       println(s"txt query $q \nreceived for host: $host")
-      val res = txtAddresses.map(RRName(host) ~ TXTRecord(_))
+      val res = txtAddresses.map(RRName(acme) ~ TXTRecord(_))
       sender ! Response(q) ~ Answers(res :_*)
 
 //      //generic
