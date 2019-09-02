@@ -17,7 +17,6 @@ import scala.concurrent.duration.DurationLong
 import scala.language.postfixOps
 
 class DnsActor extends Actor {
-  import context._
 
   val root = "apps.bilal-fazlani.com"
   val acme = s"_acme-challenge.$root"
@@ -32,54 +31,49 @@ class DnsActor extends Actor {
 
   var txtAddresses: Seq[String] = Seq.empty
 
-   val destinationDns = new InetSocketAddress("8.8.8.8", 53)
-//  val destinationDns = new InetSocketAddress("10.0.0.2", 53)
-
-  def forwardMessage(message: Message): Future[Message] = {
-    implicit val timeout: Timeout = Timeout(2 seconds)
-    (IO(Dns) ? Dns.DnsPacket(message, destinationDns)).mapTo[Message]
-  }
-
   override def receive: PartialFunction[Any, Unit] =  LoggingReceive {
     case AddTxtRecord(value) =>
-      println(s"adding new txt address: $value\n")
+      pprintln(s"adding new txt address: $value")
       txtAddresses = txtAddresses :+ value
-      println(s"new txtAddress list: $txtAddresses\n")
+      pprintln(s"new txtAddress list: $txtAddresses")
 
     case GetAllTxtRecords =>
-      pprintln("getting all txt records\n")
+      pprintln("getting all txt records")
       sender() ! txtAddresses
 
     case Query(q) ~ Questions(QName(host) ~ TypeTXT() :: Nil) =>
-      println(s"TXT_RECORD query received for host: $host")
+      pprintln(s"TXT_RECORD query received for host: $host")
       pprintln(q)
       println()
       val res = txtAddresses.map(RRName(acme) ~ TXTRecord(_))
-      val response = (Response(q) ~ Answers(res: _*) ~ AuthoritativeAnswer).copy(additional = Seq.empty)
+      val response = (Response(q) ~ Answers(res: _*) ~ AuthoritativeAnswer)
       sender ! response
-      println("response sent")
+      pprintln("response sent")
       pprintln(response)
+      println()
 
     case Query(q) ~ Questions(QName(host) ~ TypeA() :: Nil) if names.contains(host.toLowerCase) =>
-      println(s"A_RECORD query received for $host")
+      pprintln(s"A_RECORD query received for $host")
       pprintln(q)
       println()
       val response = Response(q) ~ Answers(RRName(host) ~ ARecord(names(host))) ~ AuthoritativeAnswer
       sender ! response
-      println("response sent")
+      pprintln("response sent")
       pprintln(response)
+      println()
 
     case message: Message =>
-      println(s"UNKNOWN query received & refused")
+      pprintln(s"UNKNOWN query received & refused")
       pprintln(message)
       println()
       val response = Response(message) ~ Refused
       sender ! response
-      println("response sent")
+      pprintln("response sent")
       pprintln(response)
+      println()
 
     case x =>
-      println(s"UNKNOWN akka message received")
+      pprintln(s"UNKNOWN akka message received")
       pprintln(x)
       println()
   }
