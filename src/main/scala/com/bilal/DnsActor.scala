@@ -24,6 +24,7 @@ class DnsActor extends Actor {
   val acme = s"_acme-challenge.$root"
 
   val names: Map[String, String] = Map(
+    root -> "13.235.235.149",
     s"myapp.$root" -> "192.168.0.104",
     s"myapp2.$root" -> "192.168.0.104",
     s"myapp3.$root" -> "192.168.0.104",
@@ -55,17 +56,17 @@ class DnsActor extends Actor {
       val res = txtAddresses.map(RRName(acme) ~ TXTRecord(_))
       sender ! Response(q) ~ Answers(res :_*) ~ AuthoritativeAnswer
 
-    case Query(q) ~ Questions(QName(host) ~ TypeA() :: Nil) if names.contains(host) =>
+    case Query(q) ~ Questions(QName(host) ~ TypeA() :: Nil) if names.contains(host.toLowerCase) =>
       println(s"A_RECORD query received for $host\n$q\n")
       sender ! Response(q) ~ Answers(RRName(host) ~ ARecord(names(host))) ~ AuthoritativeAnswer
 
     case message: Message =>
-      println(s"UNKNOWN query received $message\n")
+      println(s"UNKNOWN query received & refused \n$message\n")
       sender ! Response(message) ~ Refused
       //forwardMessage(message).pipeTo(sender)
 
     case x =>
-      println(s"UNKNOWN akka message received $x\n")
+      println(s"UNKNOWN akka message received \n$x\n")
   }
 }
 
