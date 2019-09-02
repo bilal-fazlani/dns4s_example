@@ -53,7 +53,37 @@ class DnsActor extends Actor {
     case Query(q) ~ Questions(QName(host) ~ TypeTXT() :: Nil) =>
       println(s"TXT_RECORD query received for host: $host\n$q\n")
       val res = txtAddresses.map(RRName(acme) ~ TXTRecord(_))
-      sender ! Response(q) ~ Answers(res :_*)
+      sender ! Response(q) ~ Answers(res :_*) ~ AuthoritativeAnswer
+
+    case Query(q) ~ Questions(QName(host) ~ TypeA() :: Nil) if names.contains(host) =>
+      println(s"A_RECORD query received for $host\n$q\n")
+      sender ! Response(q) ~ Answers(RRName(host) ~ ARecord(names(host))) ~ AuthoritativeAnswer
+
+    case message: Message =>
+      println(s"UNKNOWN query received $message\n")
+      sender ! Response(message) ~ Refused
+      //forwardMessage(message).pipeTo(sender)
+
+    case x =>
+      println(s"UNKNOWN akka message received $x\n")
+  }
+}
+
+object DnsActor {
+
+  case class AddTxtRecord(value: String)
+  case object GetAllTxtRecords
+
+  def start(implicit system: ActorSystem): ActorRef = {
+    implicit val timeout: Timeout    = Timeout(5 seconds)
+    system.actorOf(Props[DnsActor])
+  }
+
+  def bind(actorRef: ActorRef)(implicit system: ActorSystem): Future[Any] = {
+    implicit val timeout: Timeout    = Timeout(5 seconds)
+    IO(Dns) ? Dns.Bind(actorRef, 53)
+  }
+}
 
 //      //generic
 //      Message(
@@ -77,28 +107,3 @@ class DnsActor extends Actor {
 //        Vector(ResourceRecord(,41,512,32768,OPTResource(List())))
 //      )
 //
-    case Query(q) ~ Questions(QName(host) ~ TypeA() :: Nil) if names.contains(host) =>
-      println(s"A_RECORD query received for $host\n$q\n")
-      sender ! Response(q) ~ Answers(RRName(host) ~ ARecord(names(host)))
-
-    case message: Message =>
-      println(s"UNKNOWN query received $message\n")
-      forwardMessage(message).pipeTo(sender)
-  }
-}
-
-object DnsActor {
-
-  case class AddTxtRecord(value: String)
-  case object GetAllTxtRecords
-
-  def start(implicit system: ActorSystem): ActorRef = {
-    implicit val timeout: Timeout    = Timeout(5 seconds)
-    system.actorOf(Props[DnsActor])
-  }
-
-  def bind(actorRef: ActorRef)(implicit system: ActorSystem): Future[Any] = {
-    implicit val timeout: Timeout    = Timeout(5 seconds)
-    IO(Dns) ? Dns.Bind(actorRef, 53)
-  }
-}
