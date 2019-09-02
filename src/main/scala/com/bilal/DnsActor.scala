@@ -42,9 +42,9 @@ class DnsActor extends Actor {
 
   override def receive: PartialFunction[Any, Unit] =  LoggingReceive {
     case AddTxtRecord(value) =>
-      pprintln(s"adding new txt address: $value\n")
+      println(s"adding new txt address: $value\n")
       txtAddresses = txtAddresses :+ value
-      pprintln(s"new txtAddress list: $txtAddresses\n")
+      println(s"new txtAddress list: $txtAddresses\n")
 
     case GetAllTxtRecords =>
       pprintln("getting all txt records\n")
@@ -55,19 +55,28 @@ class DnsActor extends Actor {
       pprintln(q)
       println()
       val res = txtAddresses.map(RRName(acme) ~ TXTRecord(_))
-      sender ! Response(q) ~ Answers(res :_*) ~ AuthoritativeAnswer
+      val response = Response(q) ~ Answers(res: _*) ~ AuthoritativeAnswer
+      sender ! response
+      println("response sent")
+      pprintln(response)
 
     case Query(q) ~ Questions(QName(host) ~ TypeA() :: Nil) if names.contains(host.toLowerCase) =>
       println(s"A_RECORD query received for $host")
       pprintln(q)
       println()
-      sender ! Response(q) ~ Answers(RRName(host) ~ ARecord(names(host))) ~ AuthoritativeAnswer
+      val response = Response(q) ~ Answers(RRName(host) ~ ARecord(names(host))) ~ AuthoritativeAnswer
+      sender ! response
+      println("response sent")
+      pprintln(response)
 
     case message: Message =>
       println(s"UNKNOWN query received & refused")
       pprintln(message)
       println()
-      sender ! Response(message) ~ Refused
+      val response = Response(message) ~ Refused
+      sender ! response
+      println("response sent")
+      pprintln(response)
 
     case x =>
       println(s"UNKNOWN akka message received")
