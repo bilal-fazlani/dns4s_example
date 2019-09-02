@@ -42,17 +42,16 @@ class DnsActor extends Actor {
 
   override def receive: PartialFunction[Any, Unit] =  LoggingReceive {
     case AddTxtRecord(value) =>
-      println(s"adding new txt address: $value")
+      println(s"adding new txt address: $value\n")
       txtAddresses = txtAddresses :+ value
-      println(s"new txtAddress list: $txtAddresses")
+      println(s"new txtAddress list: $txtAddresses\n")
 
     case GetAllTxtRecords =>
-      println("getting all txt records")
+      println("getting all txt records\n")
       sender() ! txtAddresses
 
-    case Query(q) ~ Questions(QName(host) ~ TypeTXT() :: Nil)
-      if host.toLowerCase == acme.toLowerCase || host.toLowerCase == root =>
-      println(s"txt query $q \nreceived for host: $host")
+    case Query(q) ~ Questions(QName(host) ~ TypeTXT() :: Nil) =>
+      println(s"TXT_RECORD query received for host: $host\n$q\n")
       val res = txtAddresses.map(RRName(acme) ~ TXTRecord(_))
       sender ! Response(q) ~ Answers(res :_*)
 
@@ -79,11 +78,11 @@ class DnsActor extends Actor {
 //      )
 //
     case Query(q) ~ Questions(QName(host) ~ TypeA() :: Nil) if names.contains(host) =>
-      println(s"query received for $host")
+      println(s"A_RECORD query received for $host\n$q\n")
       sender ! Response(q) ~ Answers(RRName(host) ~ ARecord(names(host)))
 
     case message: Message =>
-      println(s"query some query $message")
+      println(s"UNKNOWN query received $message\n")
       forwardMessage(message).pipeTo(sender)
   }
 }
