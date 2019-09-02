@@ -11,8 +11,10 @@ object Main extends App {
   implicit val system: ActorSystem = ActorSystem("DnsServer")
   var exitCode = 0
   try{
-    val txtValue: String = args.headOption.getOrElse(throw new RuntimeException("please provide txt value"))
-    val startResult = Await.result(DnsActor.start(txtValue), 5.seconds)
+    val ref = DnsActor.start
+    val httpBindResult = Await.result(new HttpServer(ref).start, 5.seconds)
+    println(s"DNS HTTP service: $httpBindResult")
+    val startResult = Await.result(DnsActor.bind(ref), 5.seconds)
     println(s"DNS service: $startResult")
     StdIn.readLine("press any button to exit...\n")
   }
