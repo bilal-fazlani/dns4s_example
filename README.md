@@ -6,7 +6,6 @@ domain name: example.com
 ### Redirect all apps.example.com to another dns server (location service)
 https://serverfault.com/a/420748/378802
 
-
 ### Add A record in DNS control panel
 
 ![img](img/ARecord.png)
