@@ -41,7 +41,8 @@ class DnsActor extends Actor {
       pprintln("getting all txt records")
       sender() ! txtAddresses
 
-    case Query(q) ~ Questions(QName(host) ~ TypeTXT() :: Nil) if host.toLowerCase == root =>
+    case Query(q) ~ Questions(QName(host) ~ TypeTXT() :: Nil)
+      if host.toLowerCase == root || host.toLowerCase == acme =>
       pprintln(s"TXT_RECORD query received for host: $host")
       pprintln(q)
       println()
@@ -52,7 +53,8 @@ class DnsActor extends Actor {
       pprintln(response)
       println()
 
-    case Query(q) ~ Questions(QName(host) ~ TypeCAA() :: Nil) if host.toLowerCase == root =>
+    case Query(q) ~ Questions(QName(host) ~ TypeCAA() :: Nil)
+      if host.toLowerCase == root || host.toLowerCase == acme =>
       pprintln(s"CAA_RECORD query received for host: $host")
       pprintln(q)
       println()
