@@ -41,12 +41,26 @@ class DnsActor extends Actor {
       pprintln("getting all txt records")
       sender() ! txtAddresses
 
-    case Query(q) ~ Questions(QName(host) ~ TypeTXT() :: Nil) =>
+    case Query(q) ~ Questions(QName(host) ~ TypeTXT() :: Nil) if host.toLowerCase == root =>
       pprintln(s"TXT_RECORD query received for host: $host")
       pprintln(q)
       println()
-      val res = txtAddresses.map(RRName(acme) ~ TXTRecord(_))
-      val response = (Response(q) ~ Answers(res: _*) ~ AuthoritativeAnswer)
+      val answers = txtAddresses.map(RRName(acme) ~ TXTRecord(_))
+      val response = (Response(q) ~ Answers(answers: _*) ~ AuthoritativeAnswer)
+      sender ! response
+      pprintln("response sent")
+      pprintln(response)
+      println()
+
+    case Query(q) ~ Questions(QName(host) ~ TypeCAA() :: Nil) if host.toLowerCase == root =>
+      pprintln(s"CAA_RECORD query received for host: $host")
+      pprintln(q)
+      println()
+      val answers = Vector(
+        RRName(host) ~ CAARecord(1, "issuewild", "letsencrypt.org"),
+        RRName(host) ~ CAARecord(1, "issue", "letsencrypt.org")
+      )
+      val response = (Response(q) ~ Answers(answers :_*) ~ AuthoritativeAnswer)
       sender ! response
       pprintln("response sent")
       pprintln(response)
